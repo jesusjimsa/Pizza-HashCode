@@ -2,23 +2,31 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
-typedef pair<unsigned int, unsigned int> Coordenada;
-
-struct Forma{
-	Coordenada inicio;
-	unsigned int fil;
-	unsigned int cols;
-};
-
-class Pizza{
+class Pizza {
 private:
 	vector< vector<char> > pizza;
-	unsigned int nfilas, ncolumnas, min_ingr, max_slice;
+	unsigned nfilas;
+	unsigned ncolumnas;
+	unsigned min_ingr;
+	unsigned max_slice;
+
+	// Una forma es una estructura auxiliar que solo tiene
+	// sentido dentro del contexto de la clase.
+	struct Forma{
+		Coordenada inicio;
+		unsigned int fil;
+		unsigned int cols;
+	};
+
+	typedef pair<unsigned int, unsigned int> Coordenada;
+
 public:
-	Pizza(string filename){
+	// Constructor desde archivo.
+	Pizza( string filename ){
 		ifstream in_file;
 		string line;
 		vector<char> aux;
@@ -53,6 +61,7 @@ public:
 		in_file.close();
 	}
 
+	// Comprueba si una forma es enclausulable.
 	bool compruebaForma(Forma forma){
 		bool forma_valida = true;
 		int num_champi = 0,
@@ -92,6 +101,7 @@ public:
 		return forma_valida;
 	}
 
+	// Determina donde seguir recorriendo la pizza.
 	Coordenada siguienteInicio(vector<vector<char>> pizza_copia){
 		int i, j;
 		encontrado = false;
@@ -109,6 +119,72 @@ public:
 
 		return coords;
 	}
+
+	// Comprueba si alguna de las n formas posibles es enclausulable.
+	Forma comprobarFormas( Coordenada inicio ) {
+
+		vector<unsigned> divisores;
+
+		// Calculamos los divisores del número.
+		int raiz = (int) sqrt( max_slice );
+	    if ( max_slice != 1 )
+	    {
+		    for ( unsigned i = 1; i < raiz; i++ ) 
+		    {
+		        if ( max_slice % i == 0 ) {
+		        	divisores.push_back( i );
+		        }
+		    }
+	    }
+	    else
+	    	divisores.push_back( 1 );
+
+		// El se divide a si mismo, lo añadimos como divisor.
+	    divisores.push_back( max_slice );
+
+	    // Comprobamos todas las formas posibles.
+		for ( unsigned i = 0; i < divisores; i++ )
+		{
+			Forma forma;
+			auto iter = divisores.end();
+			iter--;
+
+			forma.inicio = inicio;
+			forma.fil = *iter;
+			forma.cols = divisores[i];
+			encapsulado = true;
+
+			if ( compruebaForma( forma ) )
+				return forma;
+		}
+
+		// Si ninguna a cumplido con las condiciones,
+		// sale del bucle y devolvemos una forma inclausulable.
+		forma.inicio = inicio;
+		forma.fil  = 1;
+		forma.cols = 1;
+		encapsulado = false;
+
+		return forma;
+	}
+
+	// En construccion.
+	/*string cortaPizza() {
+
+		stack<forma> pila, cool_pila;
+		int nerrores, min_nerrores;
+		int x, y;
+
+		while ( x < nfilas )
+		{
+			while ( y < ncolumnas )
+			{
+				Forma forma;
+
+
+			}
+		}
+	}*/
 };
 
 int main(int argc, char *argv[]){
@@ -121,11 +197,18 @@ int main(int argc, char *argv[]){
 		ofstream output;
 		string cortada;
 
-		output.open("output.txt");
+		/*output.open("output.txt");
 		if(){
 			cerr << "Error while creating the output file" << endl;
 			return 0;
+		}*/
+		try {
+		    output.open ("output.txt");
 		}
+	 	catch ( const ifstream::failure& e ) {
+	    	cerr << "Exception creating the output file.";
+	    	return 0;
+	  	}
 
 		cortada = pizza.cortaPizza();
 		output << cortada;
